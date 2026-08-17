@@ -1,8 +1,4 @@
-#include <unistd.h>
-#include <pwd.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
+#include "include/functions.h"
 
 void exitShell(){
     printf("EXITING FROM THE SHELL.");
