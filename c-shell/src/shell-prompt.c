@@ -1,4 +1,4 @@
-#include "include/functions.h"
+#include "functions.h"
 
 void exitShell(){
     printf("EXITING FROM THE SHELL.");
@@ -25,14 +25,16 @@ void getPrompt(char** res){
 
     char* homeDir = userDetails->pw_dir;
 
-    if(strlen(cwd) < strlen(homeDir)){
-        int prompt_length = strlen(username) + strlen(hostname) + strlen(cwd) + 10;
-        char prompt[prompt_length];
+    for(int i=0;i<(int)strlen(cwd);i++){
+        if(i<(int)strlen(homeDir) && cwd[i] != homeDir[i]){
+            int prompt_length = strlen(username) + strlen(hostname) + strlen(cwd) + 10;
+            char* prompt = (char*)malloc(prompt_length);
 
-        sprintf(prompt, "<%s@%s:%s>:", username, hostname, cwd);
-        *res = prompt;
+            sprintf(prompt, "<%s@%s:%s>:", username, hostname, cwd);
+            *res = prompt;
 
-        return;
+            return;
+        }
     }
 
     char temp[strlen(cwd) + 1];
@@ -47,7 +49,7 @@ void getPrompt(char** res){
     }
 
     int prompt_length = strlen(username) + strlen(hostname) + strlen(shrinkedCwd) + 10;
-    char prompt[prompt_length];
+    char* prompt = (char*)malloc(prompt_length);
 
     sprintf(prompt, "<%s@%s:%s>:", username, hostname, shrinkedCwd);
     *res = prompt;
@@ -58,13 +60,6 @@ void getPrompt(char** res){
 void prompt(){
     char* propt = NULL;
     getPrompt(&propt);
-    printf("%s\n", propt);
+    printf("%s ", propt);
+    free(propt);
 }
-
-int main(){
-    prompt();
-
-    return 0;
-}
-
-
