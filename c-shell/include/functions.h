@@ -7,5 +7,5 @@
 
 void exitShell();
 
-void getPrompt();
+void getPrompt(char** res);
 void prompt();
