@@ -23,35 +23,42 @@ void getPrompt(char** res){
         exitShell();
     }
 
-    char* homeDir = userDetails->pw_dir;
-
-    for(int i=0;i<(int)strlen(cwd);i++){
-        if(i<(int)strlen(homeDir) && cwd[i] != homeDir[i]){
-            int prompt_length = strlen(username) + strlen(hostname) + strlen(cwd) + 10;
-            char* prompt = (char*)malloc(prompt_length);
-
-            sprintf(prompt, "<%s@%s:%s>:", username, hostname, cwd);
-            *res = prompt;
-
-            return;
+    static char* homeDir = NULL;
+    if(homeDir == NULL){
+        homeDir = getcwd(NULL, 0);
+        if(homeDir == NULL){
+            printf("ERROR : Could not fetch current home directory.\n");
+            exitShell();
         }
     }
 
-    char temp[strlen(cwd) + 1];
-    strncpy(temp, cwd + strlen(homeDir), strlen(cwd) - strlen(homeDir) + 1);
+    char* displayPath = NULL;
     
-    char shrinkedCwd[strlen(cwd) + 10];
-    if(strlen(temp)==0){
-        sprintf(shrinkedCwd, "~");
+    if(!strcmp(homeDir, cwd)){
+        displayPath = "~";
+    }
+    else if( (!strncmp(cwd, homeDir, strlen(homeDir))) && cwd[strlen(homeDir)] == '/'){
+        displayPath = cwd + strlen(homeDir);
     }
     else{
-        sprintf(shrinkedCwd, "~/%s", temp);
+        displayPath = cwd;
     }
+
+    char shrinkedCwd[1000];
+
+    if(displayPath[0] == '/'){
+        snprintf(shrinkedCwd, strlen(displayPath), "~%s", displayPath);
+    }
+    else{
+        snprintf(shrinkedCwd, strlen(displayPath), "%s", displayPath);
+    }
+
 
     int prompt_length = strlen(username) + strlen(hostname) + strlen(shrinkedCwd) + 10;
     char* prompt = (char*)malloc(prompt_length);
 
-    sprintf(prompt, "<%s@%s:%s>:", username, hostname, shrinkedCwd);
+    sprintf(prompt, "<%s@%s:%s>", username, hostname, shrinkedCwd);
+    
     *res = prompt;
 
     return;

@@ -1,5 +1,7 @@
 #include "functions.h"
 
+int no_commands = 1;
+
 int main(){
     printf("\n================================================================================================================================\n\n");
 
@@ -9,7 +11,11 @@ int main(){
         char* input = NULL;
         size_t bufsize = 0;
 
-        getline(&input, &bufsize, stdin);
+        int ret = getline(&input, &bufsize, stdin);
+        if(ret == -1){
+            free(input);
+            break;
+        }
         if(!strcmp(input, "EXIT\n")){
             break;
         }
@@ -17,32 +23,31 @@ int main(){
             continue;
         }
         
-        char** tokens = NULL;
-        int len = parse(input, &tokens);
+        int error = 0;
+        Node* llHead = parse(input, &error);
 
-        if(len == -1){
-            printf("c-shell : invalid syntax\n");
-            continue;
-        }
-
-        // for(int i=0;i<len;i++){
-        //     printf("%s\n", tokens[i]);
-        // }
-
-        Node* llHead = lexer(tokens, len);
-        if(llHead == NULL){
-            printf("c-shell : invalid syntax\n");
+        if(error == 1){
+            printf("c-shell : invalid syntax.\n");
             continue;
         }
 
         Node* temp = llHead;
-        int idx = 0;
         while(temp!=NULL){
-            printf("TYPE = %d | String = %s\n", temp->type, tokens[idx++]);
+            printf("TYPE = %d | String = %s\n", temp->type, temp->token);
             temp = temp->next;
         }
-    }
 
+        // Node* temp = llHead; int idx = 0;
+
+        // for(int i=0;i<no_commands;i++){
+        //     if( temp->type == WORD && strcmp(tokens[idx], cmds[i]) ){
+        //         hop(temp->next);
+        //     }
+        // }
+
+        freeNodes(llHead);
+        free(input);
+    }
     printf("\n================================================================================================================================\n\n");
     return 0;
 }

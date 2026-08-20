@@ -17,13 +17,27 @@ typedef enum Type{
     SEMI,
     AMP,
     CMD,
-    BG
+    BG,
+    DONE
 }Type;
 
 typedef struct Node{
     Type type;
+    char* token;
     struct Node* next;
 }Node;
+
+
+typedef int (*cmd_func)(Node* args);
+
+typedef struct cmd{
+    char* cmd_name;
+    cmd_func func;
+}cmd;
+
+cmd cmds[] = {
+    {"hop", hop}
+};
 
 
 void exitShell();
@@ -31,6 +45,9 @@ void exitShell();
 void getPrompt(char** res);
 void prompt();
 
-int parse(char* line, char*** tokens);
+Node* parse(char* line, int* error);
 
-Node* lexer(char** tokens, int len);
+int lexer(Node** node, char* word, int len, Type* nextTokenType);
+void freeNodes(Node* head);
+
+int hop(Node* tokens);

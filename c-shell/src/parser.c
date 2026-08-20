@@ -1,6 +1,6 @@
 #include "functions.h"
 
-char space_characters[] = {' ', '\n', '\r'};
+char space_characters[] = {' ', '\n', '\r', '\t'};
 char special_characters[] = {'|', '&', '>', '<', ';'};
 
 bool in(char c, char* arr, int len){
@@ -12,77 +12,167 @@ bool in(char c, char* arr, int len){
     return false;
 }
 
-int parse(char* line, char*** tokens){
-    int len = 50; int idx = 0;
-    (*tokens) = (char**)malloc(len * sizeof(char*));
+Node* parse(char* line, int* error){
 
-    bool inside_dq = false; bool inside_sq = false; bool escaped = false;
+    Node* buffer = (Node*)malloc(sizeof(Node));
+    buffer->next = NULL; buffer->token = NULL; buffer->type = WORD;
 
-    int i=0; int j=0;
+    Node* temp = buffer;
+
+    Type nextTokenType = WORD;
+
+    bool inside_dq = false; bool inside_sq = false;
+
+    bool escaped = false;
+
     int n = strlen(line);
-    while(i<n){
 
-        if(!inside_dq && !inside_sq && in(line[i], space_characters, 3)){
+    int word_size = 100; int idx = 0;
+    char* word = (char*)malloc(word_size * sizeof(char));
 
-            if(i>j){
-                (*tokens)[idx] = (char*)malloc((i - j + 1) * sizeof(char));
-                strncpy((*tokens)[idx], line + j, i - j);
-                (*tokens)[idx++][i - j] = '\0';
+    for(int i=0;i<n;i++){
+
+        // Outside Quotes
+        if(!inside_dq && !inside_sq){
+
+            // Escaped Processing
+            if(escaped){
+                word[idx++] = line[i];
+                escaped = false;
+                continue;
             }
 
-            i++; j = i;
-        }
-        else if(!inside_dq && !inside_sq && in(line[i], special_characters, 5)){
+            // Checking for space
+            if(in(line[i], space_characters, 4)){
+                
+                if(idx == 0){
+                    continue;
+                }
 
-            if(i>j){
-                (*tokens)[idx] = (char*)malloc((i - j + 1) * sizeof(char));
-                strncpy((*tokens)[idx], line + j, i - j);
-                (*tokens)[idx++][i - j] = '\0';
+                word[idx] = '\0';
+                int ret = lexer(&temp, word, idx, &nextTokenType);
+
+                if(ret == -1){
+                    free(word);
+                    freeNodes(buffer);
+                    *error = 1;
+                    return NULL;
+                }
+
+                idx = 0;
+                continue;
             }
 
-            if(line[i]=='>' && i<n-1 && line[i+1] == '>'){
-                (*tokens)[idx] = (char*)malloc(3 * sizeof(char));
-                strncpy((*tokens)[idx], line + i, 2);
-                (*tokens)[idx++][2] = '\0';
+            // Checking for Special Characters
+            if(in(line[i], special_characters, 5)){
 
-                i += 2;
+                if(idx > 0){
+                    word[idx] = '\0';
+                    int ret = lexer(&temp, word, idx, &nextTokenType);
+
+                    if(ret == -1){
+                        free(word);
+                        freeNodes(buffer);
+                        *error = 1;
+                        return NULL;
+                    }
+
+                    idx = 0;
+                }
+
+                word[idx++] = line[i];
+                if(line[i] == '>' && i != n-1 && line[i+1] == '>'){
+                    word[idx++] = '>';
+                    i++;
+                }
+
+                word[idx] = '\0';
+                int ret = lexer(&temp, word, idx, &nextTokenType);
+
+                if(ret == -1){
+                    free(word);
+                    freeNodes(buffer);
+                    *error = 1;
+                    return NULL;
+                }
+
+                idx = 0;
+                continue;
             }
-            else{
-                (*tokens)[idx] = (char*)malloc(2 * sizeof(char));
-                strncpy((*tokens)[idx], line + i, 1);
-                (*tokens)[idx++][1] = '\0';
 
-                i++;
-            }
 
-            j = i;
-        }
-        else{
-
-            if(line[i] == '\'' && !escaped){
-                inside_sq = !inside_sq;
-            }
-            if(line[i] == '\"' && !escaped){
-                inside_dq = !inside_dq;
-            }
-
-            if(!inside_sq && !inside_dq && line[i] == '\\'){
+            if(line[i] == '\\'){
+                // End character as /
+                if(i == n-1){
+                    free(word);
+                    freeNodes(buffer);
+                    *error = 1;
+                    return NULL;
+                }
+                
                 escaped = true;
+                continue;
             }
 
-            i++;
+            if(line[i] == '\''){
+                inside_sq = true;
+                continue;
+            }
+            else if(line[i] == '\"'){
+                inside_dq = true;
+                continue;
+            }
+
+            // Just a Normal Character
+            word[idx++] = line[i];
+        }
+
+        // Inside Double Quotes
+        if(inside_dq){
+            if(!escaped && line[i] == '\\'){
+                escaped = true;
+                continue;
+            }
+
+            if(escaped){
+                // checking if " or \ are escaped
+                if(line[i] == '\"' || line[i] == '\\'){
+                    word[idx++] = line[i];
+                    continue;
+                }
+
+                // ANY_CHAR after \ treated as different characters
+                word[idx++] = '\\';
+                word[idx++] = line[i];
+                continue;
+            }
+
+            if(line[i] == '\"'){
+                inside_dq = false;
+                continue;
+            }
+
+            // Just a normal character inside a dq
+            word[idx++] = line[i];
+        }
+        if(inside_sq){
+            
+            if(line[i] == '\''){
+                inside_sq = false;
+                continue; 
+            }
+
+            word[idx++] = line[i];
+            continue;
         }
     }
 
-    if(i>j){
-        (*tokens)[idx] = (char*)malloc((i - j + 1) * sizeof(char));
-        strncpy((*tokens)[idx], line + j, i - j);
-        (*tokens)[idx++][i - j] = '\0';
+    if(inside_dq || inside_sq || escaped || nextTokenType == CMD || nextTokenType == TGT){
+        free(word);
+        freeNodes(buffer);
+        *error = 1;
+        return NULL;
     }
 
-    if(inside_dq || inside_sq || escaped){
-        return -1;
-    }
-
-    return idx;
+    return buffer->next;
 }

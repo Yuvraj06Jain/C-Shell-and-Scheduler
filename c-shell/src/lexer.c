@@ -1,8 +1,8 @@
 #include "functions.h"
 
 Type findType(char* token){
-    if(!strcmp(token, ">"))  return LT;
-    else if(!strcmp(token, "<")) return GT;
+    if(!strcmp(token, "<"))  return LT;
+    else if(!strcmp(token, ">")) return GT;
     else if(!strcmp(token, ">>")) return GTGT;
     else if(!strcmp(token, ";")) return SEMI;
     else if(!strcmp(token, "|")) return PIPE;
@@ -12,43 +12,54 @@ Type findType(char* token){
     return WORD;
 }
 
-Type assignNext(Type curr){
+Type assignNext(Type curr, Type prev){
     if(curr == LT || curr == GT || curr == GTGT) return TGT;
     else if(curr == SEMI || curr == PIPE) return CMD;
     else if(curr == AMP) return BG;
-    else if(curr == WORD) return ARG;
+    else if(curr == WORD){
+        if(prev == BG) return DONE;
+        else return ARG;
+    }
 
     return ARG;
 }
 
-Node* lexer(char** tokens, int len){
-    Type next;
+int lexer(Node** node, char* word, int len, Type* nextTokenType){
 
-    Node* head = (Node*)malloc(sizeof(Node));
+    Node* newNode = (Node*)malloc(sizeof(Node));
+    newNode->next = NULL;
+
+    newNode->token = (char*)malloc((len + 1)  * sizeof(char));
+    strncpy(newNode->token, word, len + 1);
+
+    Type currType = findType(word);
+    if( (*nextTokenType) == DONE || ((*nextTokenType) != ARG && currType != WORD )){
+        free(newNode->token);
+        free(newNode);
+        return -1;
+    }
+    
+    newNode->type = currType;
+    (*nextTokenType) = assignNext(currType, (*nextTokenType));
+
+    (*node)->next = newNode;
+    (*node) = newNode;
+    
+
+    return 0;
+}
+
+void freeNodes(Node* head){
     Node* temp = head;
 
-    head->type = findType(tokens[0]);
-    if(head->type != WORD){
-        return NULL;
+    while(head != NULL){
+        head = head->next;
+        if(temp->token != NULL){
+            free(temp->token);
+        }
+        free(temp);
+        temp = head;
     }
 
-    next = assignNext(head->type);
-    
-    head->next = NULL;
-
-    for(int i=1;i<len;i++){
-        Node* newNode = (Node*)malloc(sizeof(Node));
-        newNode->next = NULL;
-
-        Type curr = findType(tokens[i]);
-        if(next != ARG && curr != WORD) return NULL;
-
-        next = assignNext(curr);
-        newNode->type = curr;
-
-        temp->next = newNode;
-        temp = newNode;
-    }
-
-    return head;
+    return;
 }
