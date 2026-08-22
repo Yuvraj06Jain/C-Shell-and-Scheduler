@@ -5,7 +5,8 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdbool.h>
-
+#include <dirent.h>
+#include <sys/stat.h>
 
 // Structs and Enums
 typedef enum Type{
@@ -60,3 +61,5 @@ char* popHis(hisNode** hisHead);
 void freeHis(hisNode* hisHead);
 
 int hop(Node* args);
+int reveal(Node* args);
+int peek(Node* args);

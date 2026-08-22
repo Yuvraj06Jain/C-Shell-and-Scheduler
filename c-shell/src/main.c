@@ -8,7 +8,7 @@ char hostname[500];
 hisNode* prevHead = NULL;
 hopNode* hopHead = NULL;
 hopNode* hopTail = NULL;
-int no_commands = 1;
+int no_commands = 3;
 
 
 typedef int (*cmd_func)(Node* args);
@@ -19,7 +19,9 @@ typedef struct cmd{
 }cmd;
 
 cmd cmds[] = {
-    {"hop", hop}
+    {"hop", hop},
+    {"reveal", reveal},
+    {"peek", peek}
 };
 
 void exitShell(){

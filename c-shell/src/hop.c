@@ -289,7 +289,7 @@ int hop(Node* args){
     if(args == NULL){
 
         if(chdir(homeDir) != 0){
-            printf("hop : no such directory\n");
+            printf("hop: no such directory\n");
             return 1;
         }
 
@@ -335,7 +335,7 @@ int hop(Node* args){
 
             if(ret != 0){
                 free(oldCwd);
-                printf("hop : no such directory\n");
+                printf("hop: no such directory\n");
                 return 1;
             }
 
@@ -356,7 +356,7 @@ int hop(Node* args){
             char* oldCwd = cwd;
 
             if(chdir("..") != 0){
-                printf("hop : no such directory\n");
+                printf("hop: no such directory\n");
                 return 1;
             }
 
@@ -384,12 +384,12 @@ int hop(Node* args){
                 pair p = findBestMatch(hopTail, token);
 
                 if(p.first == NULL){
-                    printf("hop : no such directory\n");
+                    printf("hop: no such directory\n");
                     return 1;
                 }
 
                 if(chdir(p.second->dirName) != 0){
-                    printf("hop : no such directory\n");
+                    printf("hop: no such directory\n");
                     return 1;
                 }
 
@@ -404,7 +404,7 @@ int hop(Node* args){
                 free(absPath);
 
                 if(ret != 0){
-                    printf("hop : no such directory\n");
+                    printf("hop: no such directory\n");
                     return 1;
                 }
 
