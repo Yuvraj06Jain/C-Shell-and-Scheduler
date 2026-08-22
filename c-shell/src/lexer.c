@@ -12,14 +12,11 @@ Type findType(char* token){
     return WORD;
 }
 
-Type assignNext(Type curr, Type prev){
+Type assignNext(Type curr){
     if(curr == LT || curr == GT || curr == GTGT) return TGT;
     else if(curr == SEMI || curr == PIPE) return CMD;
     else if(curr == AMP) return BG;
-    else if(curr == WORD){
-        if(prev == BG) return DONE;
-        else return ARG;
-    }
+    else if(curr == WORD) return ARG;
 
     return ARG;
 }
@@ -40,7 +37,7 @@ int lexer(Node** node, char* word, int len, Type* nextTokenType){
     }
     
     newNode->type = currType;
-    (*nextTokenType) = assignNext(currType, (*nextTokenType));
+    (*nextTokenType) = assignNext(currType);
 
     (*node)->next = newNode;
     (*node) = newNode;

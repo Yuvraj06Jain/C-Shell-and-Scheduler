@@ -6,6 +6,8 @@
 #include <math.h>
 #include <stdbool.h>
 
+
+// Structs and Enums
 typedef enum Type{
     WORD,
     ARG,
@@ -27,19 +29,22 @@ typedef struct Node{
     struct Node* next;
 }Node;
 
-
-typedef int (*cmd_func)(Node* args);
-
-typedef struct cmd{
-    char* cmd_name;
-    cmd_func func;
-}cmd;
-
-cmd cmds[] = {
-    {"hop", hop}
-};
+typedef struct hisNode{
+    char* dirName;
+    struct hisNode* prev;
+}hisNode;
 
 
+// Constants
+
+extern char* homeDir;
+extern char* cwd;
+extern char hostname[500];
+extern char* username;
+
+extern hisNode* prevHead;
+
+// Functions
 void exitShell();
 
 void getPrompt(char** res);
@@ -50,4 +55,8 @@ Node* parse(char* line, int* error);
 int lexer(Node** node, char* word, int len, Type* nextTokenType);
 void freeNodes(Node* head);
 
-int hop(Node* tokens);
+void pushHis(hisNode** hisHead, char* dirName);
+char* popHis(hisNode** hisHead);
+void freeHis(hisNode* hisHead);
+
+int hop(Node* args);

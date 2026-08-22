@@ -4,7 +4,7 @@ CFLAGS   = -std=c23 \
            -D_XOPEN_SOURCE=700 \
            -Wall -Wextra -Werror \
            -Wno-unused-parameter \
-           -fno-asm
+           -fno-asm 
 
 INCLUDES = -Iinclude
 

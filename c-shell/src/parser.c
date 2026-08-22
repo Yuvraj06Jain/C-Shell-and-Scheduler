@@ -27,7 +27,7 @@ Node* parse(char* line, int* error){
 
     int n = strlen(line);
 
-    int word_size = 100; int idx = 0;
+    int word_size = 1024; int idx = 0;
     char* word = (char*)malloc(word_size * sizeof(char));
 
     for(int i=0;i<n;i++){
@@ -144,6 +144,8 @@ Node* parse(char* line, int* error){
                 // ANY_CHAR after \ treated as different characters
                 word[idx++] = '\\';
                 word[idx++] = line[i];
+
+                escaped = false;
                 continue;
             }
 
@@ -167,6 +169,19 @@ Node* parse(char* line, int* error){
         }
     }
 
+    if(idx > 0){
+        word[idx] = '\0';
+        int ret = lexer(&temp, word, idx, &nextTokenType);
+
+        if(ret == -1){
+            free(word);
+            freeNodes(buffer);
+            *error = 1;
+            return NULL;
+        }
+        idx = 0;
+    }
+
     if(inside_dq || inside_sq || escaped || nextTokenType == CMD || nextTokenType == TGT){
         free(word);
         freeNodes(buffer);
@@ -174,5 +189,6 @@ Node* parse(char* line, int* error){
         return NULL;
     }
 
+    free(word);
     return buffer->next;
 }
