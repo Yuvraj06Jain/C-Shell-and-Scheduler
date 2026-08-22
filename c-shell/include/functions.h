@@ -7,6 +7,8 @@
 #include <stdbool.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <fcntl.h>
+
 
 // Structs and Enums
 typedef enum Type{

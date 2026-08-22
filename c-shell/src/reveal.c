@@ -53,8 +53,7 @@ void listDir(char* path, char* prefix){
 }
 
 int reveal(Node* args){
-    hidden = 0;
-    recursive = 0;
+    hidden = 0; recursive = 0;
 
     char* pathArg = NULL;
     int pathArgCount = 0;
