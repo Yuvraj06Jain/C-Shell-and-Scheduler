@@ -8,7 +8,7 @@ char hostname[500];
 hisNode* prevHead = NULL;
 hopNode* hopHead = NULL;
 hopNode* hopTail = NULL;
-int no_commands = 3;
+int no_commands = 4;
 
 
 typedef int (*cmd_func)(Node* args);
@@ -21,7 +21,8 @@ typedef struct cmd{
 cmd cmds[] = {
     {"hop", hop},
     {"reveal", reveal},
-    {"peek", peek}
+    {"peek", peek},
+    {"locate", locate}
 };
 
 void exitShell(){
@@ -103,11 +104,16 @@ int main(){
 
         // }
 
-
+        int cmd_found = 0;
         for(int i=0;i<no_commands;i++){
             if( !strcmp(cmds[i].cmd_name, llHead->token) ){
+                cmd_found = 1;
                 cmds[i].func(llHead->next);
+                break;
             }
+        }
+        if(!cmd_found){
+            execute(llHead);
         }
 
         freeNodes(llHead);

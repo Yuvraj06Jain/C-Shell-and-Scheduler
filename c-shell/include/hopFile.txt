@@ -1,1 +1,1 @@
-/home/yuvraj/Desktop		/home/yuvraj/SnYu		/home/yuvraj/SnYu/Photos		
+/home/yuvraj/Desktop/Projects/C-Shell-and-Scheduler/c-shell/obj		/home/yuvraj/Desktop/Projects/C-Shell-and-Scheduler/c-shell/src		

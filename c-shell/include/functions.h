@@ -8,7 +8,8 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
+#include <sys/wait.h>
+#include <sys/types.h>
 
 // Structs and Enums
 typedef enum Type{
@@ -62,6 +63,13 @@ void pushHis(hisNode** hisHead, char* dirName);
 char* popHis(hisNode** hisHead);
 void freeHis(hisNode* hisHead);
 
+int getPathDirs(char*** pathDirs);
+
 int hop(Node* args);
 int reveal(Node* args);
 int peek(Node* args);
+int locate(Node* args);
+
+int execute(Node* args);
+
+
