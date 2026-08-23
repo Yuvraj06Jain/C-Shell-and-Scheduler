@@ -138,6 +138,7 @@ Node* parse(char* line, int* error){
                 // checking if " or \ are escaped
                 if(line[i] == '\"' || line[i] == '\\'){
                     word[idx++] = line[i];
+                    escaped = false;
                     continue;
                 }
 

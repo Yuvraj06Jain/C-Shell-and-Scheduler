@@ -210,43 +210,46 @@ void peekSeekRev(int fd, int* lineNum){
     if(numbered) *lineNum += fileNonEmpty;
 }
 
-int peek(Node* args){
-    numbered = 0; reversed = 0;
+int main(int argc, char* argv[]){
+    numbered = 0;
+    reversed = 0;
 
-    Node* argTemp = args;
-
-    while(argTemp != NULL){
-        char* token = argTemp->token;
+    int idx = 1;
+    while(idx<argc){
+        char* token = argv[idx];
 
         if(token[0] == '-' && (int)strlen(token) > 1 && token[1] != '/'){
-            for(int i = 1; token[i] != '\0'; i++){
-                if(token[i] == 'n') numbered = 1;
-                else if(token[i] == 'r') reversed = 1;
+            for(int j = 1; token[j] != '\0'; j++){
+                if(token[j] == 'n') numbered = 1;
+                else if(token[j] == 'r') reversed = 1;
                 else{
                     printf("peek: invalid syntax\n");
                     return 1;
                 }
             }
-            argTemp = argTemp->next;
         }
-        else break;
+        else{
+            break;
+        }
     }
 
     int lineNum = 0;
 
-    if(argTemp == NULL){
+    if(idx == argc){
         if(reversed) peekBufRev(STDIN_FILENO, &lineNum);
         else peekFwd(STDIN_FILENO, &lineNum);
         return 0;
     }
 
-    while(argTemp != NULL){
-        char* token = argTemp->token;
+    while(idx<argc){
+        char* token = argv[idx];
 
         if(!strcmp(token, "-")){
             if(reversed) peekBufRev(STDIN_FILENO, &lineNum);
             else peekFwd(STDIN_FILENO, &lineNum);
-            return 1;
+            
+            idx++;
+            continue;
         }
 
         struct stat st;
@@ -274,7 +277,8 @@ int peek(Node* args){
         }
 
         close(fd);
-        argTemp = argTemp->next;
+
+        idx++;
     }
 
     return 0;

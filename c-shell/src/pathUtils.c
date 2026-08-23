@@ -36,5 +36,8 @@ int getPathDirs(char*** pathDirs){
     (*pathDirs)[idx1++] = strdup(temp);
 
     free(temp);
+    free(path);
     return idx1;
 }
+
+

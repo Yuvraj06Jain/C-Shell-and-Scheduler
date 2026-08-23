@@ -1,1 +1,0 @@
-/home/yuvraj/Desktop/Projects/C-Shell-and-Scheduler/c-shell/obj		/home/yuvraj/Desktop/Projects/C-Shell-and-Scheduler/c-shell/src		

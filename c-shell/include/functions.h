@@ -40,7 +40,6 @@ typedef struct hisNode{
 
 
 // Constants
-
 extern char* homeDir;
 extern char* cwd;
 extern char hostname[500];
@@ -59,16 +58,9 @@ Node* parse(char* line, int* error);
 int lexer(Node** node, char* word, int len, Type* nextTokenType);
 void freeNodes(Node* head);
 
-void pushHis(hisNode** hisHead, char* dirName);
-char* popHis(hisNode** hisHead);
-void freeHis(hisNode* hisHead);
-
 int getPathDirs(char*** pathDirs);
 
 int hop(Node* args);
-int reveal(Node* args);
-int peek(Node* args);
-int locate(Node* args);
 
 int execute(Node* args);
 

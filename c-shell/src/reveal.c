@@ -52,24 +52,24 @@ void listDir(char* path, char* prefix){
     free(dirNames);
 }
 
-int reveal(Node* args){
+int main(int argc, char* argv[]){
     hidden = 0; recursive = 0;
+
 
     char* pathArg = NULL;
     int pathArgCount = 0;
 
-    Node* argTemp = args;
-    while(argTemp != NULL){
-        char* token = argTemp->token;
+    for(int i=1;i<argc;i++){
+        char* token = argv[i];
 
         if(token[0] == '-' && (int)strlen(token) > 1 && token[1] != '/'){
             if(pathArgCount > 0){
                 printf("reveal: invalid syntax\n");
                 return 1;
             }
-            for(int i = 1; token[i] != '\0'; i++){
-                if(token[i] == 'a') hidden = 1;
-                else if(token[i] == 't') recursive = 1;
+            for(int j = 1; token[j] != '\0'; j++){
+                if(token[j] == 'a') hidden = 1;
+                else if(token[j] == 't') recursive = 1;
                 else{
                     printf("reveal: invalid syntax\n");
                     return 1;
@@ -85,24 +85,23 @@ int reveal(Node* args){
             pathArg = token;
         }
 
-        argTemp = argTemp->next;
     }
 
     char* target = NULL;
     int freeTarget = 0;
 
     if(pathArg == NULL || !strcmp(pathArg, ".")){
-        target = cwd;
+        target = getcwd(NULL, 0);
     }
     else if(!strcmp(pathArg, "~")){
-        target = homeDir;
+        target = getenv("CSHELL_HOME");
     }
     else if(!strcmp(pathArg, "-")){
-        if(prevHead == NULL){
+        if(getenv("OLDCWD") == NULL){
             printf("reveal: no such directory\n");
             return 1;
         }
-        target = prevHead->dirName;
+        target = getenv("OLDCWD");
     }
     else{
         target = realpath(pathArg, NULL);

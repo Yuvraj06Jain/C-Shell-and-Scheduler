@@ -46,17 +46,18 @@ int currDirCheck(char* fileName){
     return 1;
 }
 
-int locate(Node* args){
-    if(args == NULL){
+int main(int argc, char* argv[]){
+
+    if(argc == 1){
         printf("locate: invalid syntax\n");
         return 1;
     }
 
     char** pathDirs = NULL;
     int lenPathDirs = getPathDirs(&pathDirs);
-    Node* argTemp = args;
-    while(argTemp!=NULL){
-        char* token = argTemp->token;
+    
+    for(int i=1;i<argc;i++){
+        char* token = argv[i];
 
         int x = currDirCheck(token);
         x = pathCheck(token, pathDirs, lenPathDirs) || x;
@@ -65,7 +66,6 @@ int locate(Node* args){
             printf("locate: command not found (%s)\n", token);
         }
 
-        argTemp = argTemp->next;
     }
 
     for(int i = 0; i<lenPathDirs; i++){

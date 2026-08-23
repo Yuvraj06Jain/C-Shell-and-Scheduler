@@ -11,20 +11,6 @@ hopNode* hopTail = NULL;
 int no_commands = 4;
 
 
-typedef int (*cmd_func)(Node* args);
-
-typedef struct cmd{
-    char* cmd_name;
-    cmd_func func;
-}cmd;
-
-cmd cmds[] = {
-    {"hop", hop},
-    {"reveal", reveal},
-    {"peek", peek},
-    {"locate", locate}
-};
-
 void exitShell(){
     printf("EXITING FROM THE SHELL.");
     exit(0);
@@ -40,6 +26,9 @@ int main(){
         printf("ERROR : Could not fetch current home directory.\n");
         exitShell();
     }
+
+    // Setting up the home as env variable
+    setenv("CSHELL_HOME", homeDir, 1);
 
     // Setting up the current Working Directory
     cwd = strdup(homeDir);
@@ -58,10 +47,6 @@ int main(){
     printf("Caching the Hop Records...\n");
     freqPair p = createHopList();
     hopHead = p.first; hopTail = p.second;
-
-    prevHead = (hisNode*)malloc(sizeof(hisNode));
-    prevHead->dirName = NULL; prevHead->prev = NULL;
-
 
     while(1){
         prompt();
@@ -96,23 +81,10 @@ int main(){
             continue;
         }
 
-        // Node* temp = llHead;
-        // while(temp!=NULL){
-
-        //     printf("TYPE = %d | String = %s\n",temp->type, temp->token);
-        //     temp = temp->next;
-
-        // }
-
-        int cmd_found = 0;
-        for(int i=0;i<no_commands;i++){
-            if( !strcmp(cmds[i].cmd_name, llHead->token) ){
-                cmd_found = 1;
-                cmds[i].func(llHead->next);
-                break;
-            }
+        if(!strcmp(llHead->token, "hop")){
+            hop(llHead->next);
         }
-        if(!cmd_found){
+        else{
             execute(llHead);
         }
 
@@ -121,7 +93,6 @@ int main(){
     }
 
     printf("\n\nDumping the Records...\n");
-    freeHis(prevHead);
     dumpHopList(hopHead);
 
     printf("\n================================================================================================================================\n\n");

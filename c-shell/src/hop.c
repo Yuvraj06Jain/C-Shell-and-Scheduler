@@ -6,7 +6,7 @@ char hopFilePath[] = "/home/yuvraj/Desktop/Projects/C-Shell-and-Scheduler/c-shel
 freqPair createHopList(){
     FILE* hopFile = fopen(hopFilePath, "r");
     if(hopFile == NULL){
-        printf("ERROR : Couldn't create the Hop Frequency List.\n");
+        printf("ERROR : Couldn't create the Hop Frequency List.\n\n");
         freqPair empty = {NULL, NULL};
         return empty;
     }
@@ -293,7 +293,7 @@ int hop(Node* args){
             return 1;
         }
 
-        pushHis(&prevHead, cwd);
+        setenv("OLDCWD", cwd, 1);
         free(cwd);
         cwd = getcwd(NULL, 0);
 
@@ -313,7 +313,7 @@ int hop(Node* args){
                 return 1;
             }
 
-            pushHis(&prevHead, cwd);
+            setenv("OLDCWD", cwd, 1);
             free(cwd);
             cwd = getcwd(NULL, 0);
 
@@ -322,16 +322,16 @@ int hop(Node* args){
         // Handling the '-' case
         else if(!strcmp(token, "-")){
 
-            if(prevHead == NULL || prevHead->dirName == NULL){
+            if(getenv("OLDCWD") == NULL){
+                argTemp = argTemp->next;
                 continue;
             }
 
             char* oldCwd = strdup(cwd);
 
-            char* prevDir = popHis(&prevHead);
+            char* prevDir = getenv("OLDCWD");
 
             int ret = chdir(prevDir);
-            free(prevDir);
 
             if(ret != 0){
                 free(oldCwd);
@@ -339,7 +339,7 @@ int hop(Node* args){
                 return 1;
             }
 
-            pushHis(&prevHead, oldCwd);
+            setenv("OLDCWD", oldCwd, 1);
             free(oldCwd);
             free(cwd);
             cwd = getcwd(NULL, 0);
@@ -362,15 +362,17 @@ int hop(Node* args){
 
             char* newCwd = getcwd(NULL, 0);
             if(newCwd == NULL){
+                argTemp = argTemp->next;
                 continue;
             }
 
             if(!strcmp(newCwd, oldCwd)){
+                argTemp = argTemp->next;
                 free(newCwd);
                 continue;
             }
 
-            pushHis(&prevHead, cwd);
+            setenv("OLDCWD", cwd, 1);
             free(cwd);
             cwd = newCwd;
 
@@ -393,7 +395,7 @@ int hop(Node* args){
                     return 1;
                 }
 
-                pushHis(&prevHead, cwd);
+                setenv("OLDCWD", cwd, 1);
                 free(cwd);
                 cwd = getcwd(NULL, 0);
 
@@ -408,7 +410,7 @@ int hop(Node* args){
                     return 1;
                 }
 
-                pushHis(&prevHead, cwd);
+                setenv("OLDCWD", cwd, 1);
                 free(cwd);
                 cwd = getcwd(NULL, 0);
 
