@@ -15,15 +15,26 @@ freqPair createHopList(){
     buffer->freq = 0; buffer->dirList = NULL; buffer->next = NULL; buffer->prev = NULL;
     hopNode* temp = buffer;
 
-    char line[1000]; int freq = 1;
+    char line[1000];
     while(fgets(line, sizeof(line), hopFile)){
+
+        char* endPtr = NULL;
+        long freq = strtol(line, &endPtr, 10);
+        if(endPtr == line){
+            continue;
+        }
+
+        char* rest = endPtr;
+        if(*rest == '\t')
+            rest++;
+
 
         dirNode* buff = (dirNode*)malloc(sizeof(dirNode));
         buff->dirName = NULL; buff->next = NULL; buff->prev = NULL;
         dirNode* tmp = buff;
 
         char dirName[1024]; int idx = 0;
-        for(int i=0;i<(int)strlen(line);i++){
+        for(int i=0;i<(int)strlen(rest);i++){
             if(line[i] == '\t'){
                 if(idx == 0){
                     continue;
@@ -53,7 +64,7 @@ freqPair createHopList(){
         }
 
         hopNode* newFreq = (hopNode*)malloc(sizeof(hopNode));
-        newFreq->freq = freq++; newFreq->next = NULL; newFreq->prev = NULL;
+        newFreq->freq = (int)freq; newFreq->next = NULL; newFreq->prev = NULL;
         newFreq->dirList = buff->next;
 
         if(newFreq->dirList != NULL){
@@ -92,6 +103,8 @@ void dumpHopList(hopNode* freqHead){
     hopNode* temp = freqHead;
     
     while(temp!=NULL){
+        fprintf(hopFile, "%d\t", temp->freq);
+
         dirNode* tmp = temp->dirList;
 
         while(tmp != NULL){
