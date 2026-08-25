@@ -227,6 +227,7 @@ int main(int argc, char* argv[]){
                     return 1;
                 }
             }
+            idx++;
         }
         else{
             break;
@@ -255,17 +256,20 @@ int main(int argc, char* argv[]){
         struct stat st;
         if(stat(token, &st) != 0){
             printf("peek: no such file or directory\n");
-            return 1;
+            idx++;
+            continue;
         }
         if(S_ISDIR(st.st_mode)){
             printf("peek: is a directory\n");
-            return 1;
+            idx++;
+            continue;
         }
 
         int fd = open(token, O_RDONLY);
         if(fd < 0){
             printf("peek: no such file or directory\n");
-            return 1;
+            idx++;
+            continue;
         }
 
         if(reversed){
