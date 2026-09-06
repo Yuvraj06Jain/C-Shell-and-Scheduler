@@ -60,8 +60,8 @@ void freeNodes(Node* head);
 
 int getPathDirs(char*** pathDirs);
 
-int hop(Node* args);
+int hop(Node* args, Node* end);
 
-int execute(Node* args);
+int execute(Node* args, Node* end);
 
-
+void execCmds(Node* llHead);

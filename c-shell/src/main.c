@@ -54,6 +54,7 @@ int main(){
         char* input = NULL;
         size_t bufsize = 0;
 
+        // Input Hanlding
         int ret = getline(&input, &bufsize, stdin);
         if(ret == -1){
             free(input);
@@ -68,6 +69,7 @@ int main(){
             continue;
         }
         
+        // Parsing and Error Hanlding
         int error = 0;
         Node* llHead = parse(input, &error);
 
@@ -81,12 +83,14 @@ int main(){
             continue;
         }
 
-        if(!strcmp(llHead->token, "hop")){
-            hop(llHead->next);
+        Node* temp = llHead;
+        while(temp!=NULL){
+            printf("Token Type: %d, Token: %s\n", temp->type, temp->token);
+            temp = temp->next;
         }
-        else{
-            execute(llHead);
-        }
+
+        // Execution
+        execCmds(llHead);
 
         freeNodes(llHead);
         free(input);
@@ -100,3 +104,52 @@ int main(){
     return 0;
 }
 
+void execCmds(Node* llHead){
+    int numCmds = 1;
+    Node** cmds = (Node**)malloc(numCmds * sizeof(Node*)); int cmdIdx = 0;
+
+    Node* temp = llHead;
+
+    while(temp!=NULL){
+        if (temp->type == SEMI){
+            if (numCmds == cmdIdx){
+                numCmds = numCmds * 2;
+                cmds = (Node**)realloc(cmds, numCmds * sizeof(Node*));
+            }
+
+            cmds[cmdIdx++] = temp;
+        }
+        temp = temp->next;
+    }
+
+    if (numCmds == cmdIdx){
+        numCmds = numCmds * 2;
+        cmds = (Node**)realloc(cmds, numCmds * sizeof(Node*));
+    }
+    cmds[cmdIdx++] = NULL;
+    numCmds = cmdIdx;
+
+    temp = llHead;
+    for(int i=0;i<numCmds;i++){
+        
+        int ret = 0;
+        if(!strcmp(temp->token, "hop")){
+            ret = hop(temp->next, cmds[i]);
+        }
+        else{
+            ret = execute(temp, cmds[i]);
+        }
+
+        if (ret!=0){
+            break;
+        }
+
+        // Advance temp to the start of the next command (skip past the SEMI node)
+        temp = cmds[i];
+        if(temp != NULL)
+            temp = temp->next;
+    }
+
+    free(cmds);
+    return;
+}

@@ -32,4 +32,4 @@ void pushRecord(hopNode** frqHead, hopNode** frqTail, char* dirName);
 void deleteNode(pair* p, hopNode** frqHed, hopNode** frqTail);
 pair findBestMatch(hopNode* frqEnd, char* dirName);
 
-int hop(Node* args);
+int hop(Node* args, Node* end);

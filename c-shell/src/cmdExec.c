@@ -49,14 +49,16 @@ void child(char* resolvedPath, char* cmdName, char** cmdArgv, int argCount,
     exit(1);
 }
 
-int execute(Node* args){
+int execute(Node* args, Node* end){
+    int retStatus = 0;
 
     int numStages = 1;
     Node** stages = (Node**)malloc(numStages * sizeof(Node*)); int stageIdx = 0;
 
     Node* temp = args;
     stages[stageIdx++] = temp;
-    while(temp != NULL){
+
+    while(temp != end){
         if(temp->type == PIPE){
             if (numStages == stageIdx){
                 numStages = numStages * 2;
@@ -101,7 +103,7 @@ int execute(Node* args){
         char** gtgtFiles = (char**)malloc((gtgtCount > 0 ? gtgtCount : 1) * sizeof(char*));
 
         temp = cmdArgs;
-        while(temp != NULL && temp->type != PIPE){
+        while(temp != NULL && temp != end && temp->type != PIPE){
             if(temp->type == LT){
                 temp = temp->next;
                 if(temp == NULL)
@@ -192,6 +194,7 @@ int execute(Node* args){
 
         if(resolvedPath == NULL){
             printf("cshell: command not found (%s)\n", cmdName);
+            retStatus = 1;
             pids[i] = -1;
             free(cmdArgv); free(ltFiles); free(gtFiles); free(gtgtFiles);
             continue;
@@ -243,6 +246,7 @@ int execute(Node* args){
 
 
         if(failed){
+            retStatus = 1;
             free(ltfds); free(gtfds); free(gtgtfds); free(resolvedPath);
             free(cmdArgv); free(ltFiles); free(gtFiles); free(gtgtFiles);
             pids[i] = -1;
@@ -356,5 +360,5 @@ int execute(Node* args){
 
     free(pids); free(helperPids); free(stages);
 
-    return 0;
+    return retStatus;
 }

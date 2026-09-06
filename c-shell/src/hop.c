@@ -297,7 +297,7 @@ pair findBestMatch(hopNode* freqEnd, char* dirName){
 }
 
 
-int hop(Node* args){
+int hop(Node* args, Node* end){
 
     if(args == NULL){
 
@@ -316,7 +316,7 @@ int hop(Node* args){
     }
 
     Node* argTemp = args;
-    while(argTemp!=NULL){
+    while(argTemp!=end){
         char* token = argTemp->token;
 
         // Handling the '~' case
