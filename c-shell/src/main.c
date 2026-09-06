@@ -144,7 +144,6 @@ void execCmds(Node* llHead){
             break;
         }
 
-        // Advance temp to the start of the next command (skip past the SEMI node)
         temp = cmds[i];
         if(temp != NULL)
             temp = temp->next;
