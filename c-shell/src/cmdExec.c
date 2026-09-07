@@ -42,6 +42,7 @@ void child(char* resolvedPath, char* cmdName, char** cmdArgv, int argCount,
     for(int i = 0; i < argCount; i++) argv[i + 1] = cmdArgv[i];
     argv[argc] = NULL;
 
+    
     execv(resolvedPath, argv);
 
     printf("cshell: command not found (%s)\n", cmdName);
@@ -49,7 +50,9 @@ void child(char* resolvedPath, char* cmdName, char** cmdArgv, int argCount,
     exit(1);
 }
 
-int execute(Node* args, Node* end){
+int execute(Node* args, Node* end, int background){
+    pid_t pgid = 0;
+
     int retStatus = 0;
 
     int numStages = 1;
@@ -335,6 +338,15 @@ int execute(Node* args, Node* end){
         if(pid == 0){
             child(resolvedPath, cmdName, cmdArgv, argCount, hasInput, inPipe[0], hasOutput, outPipe[1], hasPrevPipe, hasPrevPipe ? pipeFds[i - 1][0] : -1, hasNextPipe, hasNextPipe ? pipeFds[i][1] : -1, pipeFds, numStages - 1);
         }
+
+        if (background){
+            if(pgid==0){
+                pgid = pid;
+            }
+            setpgid(pid, pgid);
+        }
+
+
         pids[i] = pid;
 
         if(hasInput) close(inPipe[0]);
@@ -348,15 +360,21 @@ int execute(Node* args, Node* end){
     if(numStages > 1)
         closeAllStagePipes(pipeFds, numStages - 1);
 
-    for(int i = 0; i < numStages; i++){
-        if(pids[i] > 0){
-            int status;
-            waitpid(pids[i], &status, 0);
+    if (background){
+        bg_pids[bg_count++] = pgid;
+        printf("[%d] %d\n",backgroundTasks++, (int)pgid);
+    }
+    else{
+        for(int i = 0; i < numStages; i++){
+            if(pids[i] > 0){
+                int status;
+                while(waitpid(pids[i], &status, 0) == -1 && errno == EINTR);
+            }
         }
     }
 
     for(int i = 0; i < helperCount; i++)
-        waitpid(helperPids[i], NULL, 0);
+        while(waitpid(helperPids[i], NULL, 0) == -1 && errno == EINTR);
 
     free(pids); free(helperPids); free(stages);
 

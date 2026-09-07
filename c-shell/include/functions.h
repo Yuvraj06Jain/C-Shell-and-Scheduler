@@ -10,6 +10,12 @@
 #include <fcntl.h>
 #include <sys/wait.h>
 #include <sys/types.h>
+#include <signal.h>
+#include <errno.h>
+
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
 
 // Structs and Enums
 typedef enum Type{
@@ -38,6 +44,16 @@ typedef struct hisNode{
     struct hisNode* prev;
 }hisNode;
 
+typedef struct cmdNode{
+    struct Node* node;
+    bool background;
+}cmdNode;
+
+typedef struct bgProcess{
+    pid_t pid;
+    char* cmdName;
+    int job;
+}bgProcess;
 
 // Constants
 extern char* homeDir;
@@ -46,6 +62,10 @@ extern char hostname[500];
 extern char* username;
 
 extern hisNode* prevHead;
+
+extern int backgroundTasks;
+extern pid_t bg_pids[512];
+extern int bg_count;
 
 // Functions
 void exitShell();
@@ -62,6 +82,6 @@ int getPathDirs(char*** pathDirs);
 
 int hop(Node* args, Node* end);
 
-int execute(Node* args, Node* end);
+int execute(Node* args, Node* end, int background);
 
 void execCmds(Node* llHead);
