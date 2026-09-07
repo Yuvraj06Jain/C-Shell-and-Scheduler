@@ -155,11 +155,15 @@ int main(){
         // }
 
         // Execution
-        execCmds(llHead);
+        ret = execCmds(llHead);
         printBg();
 
         freeNodes(llHead);
         free(input);
+
+        if(ret == 1){
+            break;
+        }
     }
 
     printf("\n\nDumping the Records...\n");
@@ -170,7 +174,9 @@ int main(){
     return 0;
 }
 
-void execCmds(Node* llHead){
+int execCmds(Node* llHead){
+    int retVal = 0;
+
     int numCmds = 1;
     cmdNode** cmds = (cmdNode**)malloc(numCmds * sizeof(cmdNode*)); int cmdIdx = 0;
 
@@ -224,6 +230,10 @@ void execCmds(Node* llHead){
         else if(!strcmp(temp->token, "activities")){
             ret = activities();
         }
+        else if(!strcmp(temp->token, "exit")){
+            retVal = 1;
+            break;
+        }
         else{
             ret = execute(temp, cmds[i]->node, cmds[i]->background);
         }
@@ -241,5 +251,5 @@ void execCmds(Node* llHead){
         free(cmds[i]);
     }
     free(cmds);
-    return;
+    return retVal;
 }

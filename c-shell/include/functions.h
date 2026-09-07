@@ -92,6 +92,6 @@ int hop(Node* args, Node* end);
 
 int execute(Node* args, Node* end, int background);
 
-void execCmds(Node* llHead);
+int execCmds(Node* llHead);
 
 int activities();
