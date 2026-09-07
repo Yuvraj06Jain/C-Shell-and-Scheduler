@@ -361,8 +361,25 @@ int execute(Node* args, Node* end, int background){
         closeAllStagePipes(pipeFds, numStages - 1);
 
     if (background){
-        bg_pids[bg_count++] = pgid;
+        bgPro[bgCount].pgid = pgid;
+        bgPro[bgCount].job = backgroundTasks;
+        bgPro[bgCount].numProcs = numStages;
+        bgPro[bgCount].procs = malloc(numStages * sizeof(process));
+
+        for(int j=0;j<numStages;j++){
+            bgPro[bgCount].procs[j].pid = pids[j];
+
+            char* token = stages[j]->token;
+            if(token[0] == '%'){
+                token++;
+            }
+
+            bgPro[bgCount].procs[j].cmdName = strdup(token);
+            bgPro[bgCount].procs[j].state = "Running";
+        }
+
         printf("[%d] %d\n",backgroundTasks++, (int)pgid);
+        bgCount++;
     }
     else{
         for(int i = 0; i < numStages; i++){

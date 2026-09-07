@@ -11,12 +11,13 @@ hopNode* hopHead = NULL;
 hopNode* hopTail = NULL;
 
 int backgroundTasks = 1;
-pid_t bg_pids[512];
-int bg_count = 0;
 
 pid_t finished_pids[512];
 int finished_status[512];
 int finished_count = 0;
+
+bgProcess bgPro[512];
+int bgCount = 0;
 
 void exitShell(){
     printf("EXITING FROM THE SHELL.");
@@ -28,14 +29,23 @@ void sigchild_handler(int sig){
     int status;
     pid_t pid;
     
-    while((pid = waitpid(-1, &status, WNOHANG)) > 0){
-        for(int i = 0; i < bg_count; i++){
-            if(bg_pids[i] == pid){
-                finished_pids[finished_count] = pid;
-                finished_status[finished_count] = status;
-                finished_count++;
-                bg_pids[i] = bg_pids[--bg_count];
-                break;
+    while((pid = waitpid(-1, &status, WNOHANG | WUNTRACED)) > 0){
+        for(int i = 0; i < bgCount; i++){
+            for(int j=0;j<bgPro[i].numProcs;j++){
+                if(bgPro[i].procs[j].pid == pid){
+                    if(WIFEXITED(status) || WIFSIGNALED(status)){
+                        bgPro[i].procs[j].state = "Completed";
+
+                        finished_pids[finished_count] = pid;
+                        finished_status[finished_count] = status;
+                        finished_count++;
+                    }
+                    else if(WIFSTOPPED(status)){
+                        bgPro[i].procs[j].state = "Stopped";
+                    }
+
+                    break;
+                }
             }
         }
     }
@@ -210,6 +220,9 @@ void execCmds(Node* llHead){
         int ret = 0;
         if(!strcmp(temp->token, "hop")){
             ret = hop(temp->next, cmds[i]->node);
+        }
+        else if(!strcmp(temp->token, "activities")){
+            ret = activities();
         }
         else{
             ret = execute(temp, cmds[i]->node, cmds[i]->background);
