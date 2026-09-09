@@ -19,7 +19,11 @@ void closeAllStagePipes(int (*pipeFds)[2], int numPipes){
 void child(char* resolvedPath, char* cmdName, char** cmdArgv, int argCount,
            int hasInput, int inFd, int hasOutput, int outFd,
            int hasPrevPipe, int prevReadFd, int hasNextPipe, int nextWriteFd,
-           int (*pipeFds)[2], int numPipes){
+           int (*pipeFds)[2], int numPipes, pid_t pgid){
+    
+    signal(SIGINT, SIG_DFL);
+    signal(SIGTSTP, SIG_DFL);
+    signal(SIGTTOU, SIG_DFL);
 
     if(hasPrevPipe) dup2(prevReadFd, STDIN_FILENO);
     if(hasNextPipe) dup2(nextWriteFd, STDOUT_FILENO);
@@ -42,7 +46,7 @@ void child(char* resolvedPath, char* cmdName, char** cmdArgv, int argCount,
     for(int i = 0; i < argCount; i++) argv[i + 1] = cmdArgv[i];
     argv[argc] = NULL;
 
-    
+    setpgid(0, pgid == 0 ? getpid() : pgid);
     execv(resolvedPath, argv);
 
     printf("cshell: command not found (%s)\n", cmdName);
@@ -52,9 +56,28 @@ void child(char* resolvedPath, char* cmdName, char** cmdArgv, int argCount,
 
 int execute(Node* args, Node* end, int background){
     pid_t pgid = 0;
-
     int retStatus = 0;
 
+    // Making the Full Command Name.
+    int fullLen = 0;
+    Node* curr = args;
+    while(curr != end){
+        if(curr->token) fullLen += strlen(curr->token) + 1;
+        curr = curr->next;
+    }
+    char* fullCmdStr = (char*)malloc((fullLen + 1) * sizeof(char));
+    fullCmdStr[0] = '\0';
+    curr = args;
+    while(curr != end){
+        if(curr->token){
+            strcat(fullCmdStr, curr->token);
+            if(curr->next != end) strcat(fullCmdStr, " ");
+        }
+        curr = curr->next;
+    }
+
+
+    // Gathering the Pipe Stages
     int numStages = 1;
     Node** stages = (Node**)malloc(numStages * sizeof(Node*)); int stageIdx = 0;
 
@@ -105,6 +128,7 @@ int execute(Node* args, Node* end, int background){
         char** gtFiles = (char**)malloc((gtCount > 0 ? gtCount : 1) * sizeof(char*));
         char** gtgtFiles = (char**)malloc((gtgtCount > 0 ? gtgtCount : 1) * sizeof(char*));
 
+        // Gathering all the file Redirections and creating the lists
         temp = cmdArgs;
         while(temp != NULL && temp != end && temp->type != PIPE){
             if(temp->type == LT){
@@ -158,6 +182,7 @@ int execute(Node* args, Node* end, int background){
         }
         ltCount = li; gtCount = gi; gtgtCount = ggi; argCount = ai;
 
+
         char* resolvedPath = NULL;
 
         if(strchr(cmdName, '/') != NULL){
@@ -203,6 +228,7 @@ int execute(Node* args, Node* end, int background){
             continue;
         }
 
+        // Opening the files for file redirections.
         int failed = 0;
 
         int* ltfds = (int*)malloc((ltCount > 0 ? ltCount : 1) * sizeof(int));
@@ -265,6 +291,8 @@ int execute(Node* args, Node* end, int background){
         int outPipe[2];
         pid_t inputPid = -1, outputPid = -1;
 
+
+        // Redirection of all the input files to a single buffer
         if(hasInput){
             pipe(inPipe);
 
@@ -294,6 +322,7 @@ int execute(Node* args, Node* end, int background){
             close(inPipe[1]);
         }
 
+        // Redirection of all the output files to a single buffer
         if(hasOutput){
             pipe(outPipe);
 
@@ -334,16 +363,20 @@ int execute(Node* args, Node* end, int background){
             close(outPipe[0]);
         }
 
+
+        // Forking
         pid_t pid = fork();
         if(pid == 0){
-            child(resolvedPath, cmdName, cmdArgv, argCount, hasInput, inPipe[0], hasOutput, outPipe[1], hasPrevPipe, hasPrevPipe ? pipeFds[i - 1][0] : -1, hasNextPipe, hasNextPipe ? pipeFds[i][1] : -1, pipeFds, numStages - 1);
+            child(resolvedPath, cmdName, cmdArgv, argCount, hasInput, inPipe[0], hasOutput, outPipe[1], hasPrevPipe, hasPrevPipe ? pipeFds[i - 1][0] : -1, hasNextPipe, hasNextPipe ? pipeFds[i][1] : -1, pipeFds, numStages - 1, pgid);
         }
 
-        if (background){
-            if(pgid==0){
-                pgid = pid;
-            }
-            setpgid(pid, pgid);
+        if(pgid==0){
+            pgid = pid;
+        }
+        setpgid(pid, pgid);
+
+        if(!background){
+            tcsetpgrp(STDIN_FILENO, pgid);
         }
 
 
@@ -360,35 +393,57 @@ int execute(Node* args, Node* end, int background){
     if(numStages > 1)
         closeAllStagePipes(pipeFds, numStages - 1);
 
-    if (background){
-        bgPro[bgCount].pgid = pgid;
-        bgPro[bgCount].job = backgroundTasks;
-        bgPro[bgCount].numProcs = numStages;
-        bgPro[bgCount].procs = malloc(numStages * sizeof(process));
+    grPro[grProCount].pgid = pgid;
+    grPro[grProCount].job = background ? backgroundTasks++ : 0;
+    grPro[grProCount].numProcs = numStages;
+    grPro[grProCount].procs = malloc(numStages * sizeof(proc));
+    grPro[grProCount].background = background;
 
-        for(int j=0;j<numStages;j++){
-            bgPro[bgCount].procs[j].pid = pids[j];
+    for(int j=0;j<numStages;j++){
+        grPro[grProCount].procs[j].pid = pids[j];
 
-            char* token = stages[j]->token;
-            if(token[0] == '%'){
-                token++;
-            }
-
-            bgPro[bgCount].procs[j].cmdName = strdup(token);
-            bgPro[bgCount].procs[j].state = "Running";
+        char* token = stages[j]->token;
+        if(token[0] == '%'){
+            token++;
         }
 
-        printf("[%d] %d\n",backgroundTasks++, (int)pgid);
-        bgCount++;
+        grPro[grProCount].procs[j].cmdName = strdup(token);
+        if(pids[j] == -1){
+            grPro[grProCount].procs[j].state = "Completed";
+        } else {
+            grPro[grProCount].procs[j].state = "Running";
+        }
+    }
+    
+    grPro[grProCount].fullCommand = strdup(fullCmdStr);
+    
+    int currentProcIdx = grProCount;
+    grProCount++;
+
+    if (background){
+        printf("[%d] %d\n", grPro[currentProcIdx].job, (int)pgid);
     }
     else{
-        for(int i = 0; i < numStages; i++){
-            if(pids[i] > 0){
-                int status;
-                while(waitpid(pids[i], &status, 0) == -1 && errno == EINTR);
+        tcsetpgrp(STDIN_FILENO, pgid);
+
+        int active = 1;
+        while(active) {
+            active = 0;
+            for (int i = 0; i < grPro[currentProcIdx].numProcs; i++) {
+                if (!strcmp(grPro[currentProcIdx].procs[i].state, "Running")) {
+                    active = 1;
+                    break;
+                }
+            }
+            if (active) {
+                pause();
             }
         }
+
+        tcsetpgrp(STDIN_FILENO, getpgrp());
     }
+
+    free(fullCmdStr);
 
     for(int i = 0; i < helperCount; i++)
         while(waitpid(helperPids[i], NULL, 0) == -1 && errno == EINTR);

@@ -49,19 +49,21 @@ typedef struct cmdNode{
     bool background;
 }cmdNode;
 
-typedef struct process{
+typedef struct proc{
     pid_t pid;
     char* cmdName;
     char* state;
-}process;
+}proc;
 
 
-typedef struct bgProcess{
+typedef struct grpProcess{
     int job;
     pid_t pgid;
-    process* procs;
+    proc* procs;
     int numProcs;
-}bgProcess;
+    char* fullCommand;
+    bool background;
+}grpProcess;
 
 // Constants
 extern char* homeDir;
@@ -72,8 +74,8 @@ extern char* username;
 extern hisNode* prevHead;
 
 extern int backgroundTasks;
-extern bgProcess bgPro[512];
-extern int bgCount;
+extern grpProcess grPro[512];
+extern int grProCount;
 
 // Functions
 void exitShell();
@@ -95,3 +97,6 @@ int execute(Node* args, Node* end, int background);
 int execCmds(Node* llHead);
 
 int activities();
+int resume(Node* args, Node* end);
+int ping(Node* args, Node* end);
+int spy(Node* args, Node* end);
